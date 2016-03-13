@@ -53,6 +53,9 @@
 #include "utils.h"
 #include "wrapops.h"
 #include "doscmd.h"
+#ifdef CONFIG_LCD_DISPLAY
+#include "display_lcd.h"
+#endif
 
 #define CURSOR_RIGHT 0x1d
 
@@ -446,6 +449,9 @@ static void run_loader(uint16_t address) {
   while ( (loader = pgm_read_byte(&ptr->loadertype)) != FL_NONE ) {
     if (detected_loader == loader &&
         address == pgm_read_word(&ptr->address)) {
+#ifdef CONFIG_LCD_DISPLAY
+       DS_SHOWP(1,"LOADER FOUND");
+#endif
       /* Found it */
       handler   = (fastloader_handler_t)pgm_read_word(&ptr->handler);
       parameter = pgm_read_byte(&ptr->parameter);
@@ -554,6 +560,10 @@ void do_chdir(uint8_t *parsestr) {
   /* clear '*' file */
   previous_file_dirent.name[0] = 0;
 
+#ifdef CONFIG_LCD_DISPLAY
+  if (fs_mode == 0)
+    DS_CD((char *)name);
+#endif
   if (ustrlen(name) != 0) {
     /* Path component after the : */
     if (name[0] == '_') {
@@ -628,7 +638,9 @@ static void parse_rmdir(void) {
     }
 
     path.dir = partition[part].current_dir;
-
+#ifdef CONFIG_LCD_DISPLAY
+    ///DS_DEL((char *)&dent);
+#endif
     res = file_delete(&path, &dent);
     if (res != 255)
       set_error_ts(ERROR_SCRATCHED,res,0);
@@ -1878,6 +1890,44 @@ static void parse_xcommand(void) {
   clean_cmdbuffer();
 
   switch (command_buffer[1]) {
+#ifdef CONFIG_LCD_DISPLAY
+   case 'T':
+    /* Text */
+
+    str = command_buffer+3;
+
+    if (command_buffer[2]=='1')
+	{
+	    DS_SHOW(0,(char *)str);
+	}
+    if (command_buffer[2]=='2')
+	{
+	    DS_SHOW(1,(char *)str);
+	}
+    if (command_buffer[2]=='C')
+	{
+	    DS_CTRL((char *)str);
+	}
+
+    break;
+
+   case 'A':
+    /* About */
+    DS_TITLE;
+    DS_SHOWP(1,"2009 by S. Bader");
+    break;
+
+   case 'G':
+    /* Greetings / Credits */
+    DS_SHOWP(0,"Credits 2 Unseen");
+	DS_SHOWP(1," and Shadowolf!");
+    break;
+
+   case 'X':
+    /* eee */
+    DS_EEE;
+    break;
+#endif
   case 'E':
     /* Change file extension mode */
     str = command_buffer+2;

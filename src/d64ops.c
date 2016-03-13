@@ -37,6 +37,9 @@
 #include "ustring.h"
 #include "wrapops.h"
 #include "d64ops.h"
+#ifdef CONFIG_LCD_DISPLAY
+#include "display_lcd.h"
+#endif
 
 #define D41_ERROR_OFFSET 174848
 #define D71_ERROR_OFFSET 349696
@@ -1421,6 +1424,9 @@ static uint16_t d64_freeblocks(uint8_t part) {
 
 static void d64_open_read(path_t *path, cbmdirent_t *dent, buffer_t *buf) {
   /* Read the directory entry of the file */
+#ifdef CONFIG_LCD_DISPLAY
+  DS_LOAD((char *) dent->name);
+#endif
   if (read_entry(path->part, &dent->pvt.dxx.dh, ops_scratch))
     return;
 
@@ -1452,6 +1458,10 @@ static void d64_open_write(path_t *path, cbmdirent_t *dent, uint8_t type, buffer
     d64_open_read(path, dent, buf);
     while (!current_error && buf->data[0])
       buf->refill(buf);
+
+#ifdef CONFIG_LCD_DISPLAY
+    DS_SAVE((char *) dent->name);
+#endif
 
     if (current_error)
       return;

@@ -50,6 +50,10 @@
 #include "wrapops.h"
 #include "fatops.h"
 
+#ifdef CONFIG_LCD_DISPLAY
+#include "display_lcd.h"
+#endif
+
 #define P00_HEADER_SIZE       26
 #define P00_CBMNAME_OFFSET    8
 #define P00_RECORDLEN_OFFSET  25
@@ -1092,16 +1096,25 @@ uint8_t fat_chdir(path_t *path, cbmdirent_t *dent) {
       }
 
 #ifdef CONFIG_M2I
-      if (check_imageext(dent->pvt.fat.realname) == IMG_IS_M2I)
+      if (check_imageext(dent->pvt.fat.realname) == IMG_IS_M2I) {
         partition[path->part].fop = &m2iops;
+#ifdef CONFIG_LCD_DISPLAY
+	    fs_mode = 1;
+#endif
+      }
       else
 #endif
         {
           if (d64_mount(path, dent->pvt.fat.realname))
             return 1;
           partition[path->part].fop = &d64ops;
+#ifdef CONFIG_LCD_DISPLAY
+          fs_mode = 1;
+#endif
         }
-
+#ifdef CONFIG_LCD_DISPLAY
+      DS_CD((char *)dent->pvt.fat.realname);
+#endif
       return 0;
     }
   }
@@ -1496,7 +1509,15 @@ uint8_t image_unmount(uint8_t part) {
   // FIXME: ops entry?
   if (partition[part].fop == &d64ops)
     d64_unmount(part);
-
+#ifdef CONFIG_LCD_DISPLAY
+  path_t path;
+  path.part    = part;
+  path.dir.fat = partition[part].current_dir.fat;
+  fat_getdirlabel(&path, ops_scratch);
+  fs_mode = 0;
+  DS_CD((char*)ops_scratch);
+  ///DS_TITLE;
+#endif
   if (display_found) {
     /* Send current path to display */
     path_t path;
@@ -1504,7 +1525,7 @@ uint8_t image_unmount(uint8_t part) {
     path.part    = part;
     path.dir.fat = partition[part].current_dir.fat;
     fat_getdirlabel(&path, ops_scratch);
-    display_current_directory(part, ops_scratch);
+    display_current_directory(part, ustrlen(ops_scratch), ops_scratch);
   }
 
   partition[part].fop = &fatops;

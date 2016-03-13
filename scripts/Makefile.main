@@ -7,7 +7,7 @@ PATCHLEVEL = 0
 FIX =
 
 # Forces bootloader version to 0, comment out or leave empty for release
-PRERELEASE = alpha0
+PRERELEASE = LCD
 
 #----------------------------------------------------------------------------
 # WinAVR Makefile Template written by Eric B. Weddington, Joerg Wunsch, et al.
@@ -104,6 +104,11 @@ endif
 
 ifdef CONFIG_ADD_ATA
   SRC += $(CONFIG_ARCH)/ata.c
+endif
+
+ifeq ($(CONFIG_LCD_DISPLAY),y)
+  SRC += display_lcd.c lcd.c
+   NEED_I2C := y
 endif
 
 # Various RTC implementations

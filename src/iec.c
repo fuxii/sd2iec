@@ -52,6 +52,9 @@
 #include "timer.h"
 #include "uart.h"
 #include "iec.h"
+#ifdef CONFIG_LCD_DISPLAY
+#include "display_lcd.h"
+#endif
 
 /* ------------------------------------------------------------------------- */
 /*  Global variables                                                         */
@@ -557,7 +560,12 @@ void iec_mainloop(void) {
       set_error(ERROR_OK);
       set_busy_led(0);
       set_dirty_led(1);
-
+#ifdef CONFIG_LCD_DISPLAY
+      DS_CLRLINE(1);
+      DS_PUTSP("SLEEP ON");
+      /// _delay_ms(1000);
+      /// DS_READY(device_address);
+#endif
       /* Wait until the sleep key is used again */
       while (!key_pressed(KEY_SLEEP))
         system_sleep();
@@ -566,6 +574,12 @@ void iec_mainloop(void) {
       update_leds();
 
       iec_data.bus_state = BUS_IDLE;
+#ifdef CONFIG_LCD_DISPLAY
+      DS_CLRLINE(1);
+      DS_PUTSP("SLEEP OFF");
+      _delay_ms(1000);
+      DS_READY(device_address);
+#endif
       break;
 
     case BUS_IDLE:  // EBFF

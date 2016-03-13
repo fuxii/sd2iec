@@ -47,6 +47,9 @@
 #include "ustring.h"
 #include "utils.h"
 
+#ifdef CONFIG_LCD_DISPLAY
+#include "display_lcd.h"
+#endif
 
 #if defined(__AVR__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 1))
 int main(void) __attribute__((OS_main));
@@ -60,9 +63,18 @@ int main(void) {
   set_busy_led(1);
   set_dirty_led(0);
 
+#ifdef CONFIG_LCD_DISPLAY
+  /* initialize display, cursor off */
+  DS_INIT;
+#endif
+
   /* Due to an erratum in the LPC17xx chips anything that may change */
   /* peripheral clock scalers must come before system_init_late()    */
   uart_init();
+#ifdef CONFIG_LCD_DISPLAY
+/* clear display and home cursor */
+  DS_CLR;
+#endif
 #ifndef SPI_LATE_INIT
   spi_init(SPI_SPEED_SLOW);
 #endif
@@ -119,6 +131,23 @@ int main(void) {
   }
 #endif
 
+#ifdef CONFIG_LCD_DISPLAY
+  DS_READY(device_address);
+  fs_mode = 0;
+
+ /* clear display and home cursor */
+  DS_CLR;
+  DS_LOGO;
+
+  /* wait a while (-; */
+  for (int i=0;i<15;i++)
+  {
+    _delay_ms(50);
+  }
+
+  /* put string to display (line 1) with linefeed */
+  DS_TITLE;
+#endif
   bus_mainloop();
 
   while (1);

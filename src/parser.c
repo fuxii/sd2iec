@@ -57,7 +57,7 @@ void update_current_dir(path_t *path){
     *ptr-- = 0;
 
     while (*ptr == ' ') *ptr-- = 0;
-    display_current_directory(path->part, dirname);
+    display_current_directory(path->part, ustrlen(dirname), dirname);
   }
 }
 
